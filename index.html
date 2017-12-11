@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>bar-map</title>
+  <style>
+    #bar-map{
+      width:1200px;
+      height:600px;
+      margin:100px auto 0;
+      border:1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <div id="bar-map"></div>
+  
+  <script src="./data.js"></script>
+  <script src="./echarts.min.js"></script>
+  <script src="./china.js"></script>
+  <script>
+    var data = {
+      '北京':48,
+      '上海':35,
+      '深圳':87,
+      '广州':175,
+      '南京':65,
+      '武汉':34,
+      '杭州':23,
+      '天津':54,
+      '苏州':54,
+      '扬州':12
+    }
+    var data = [
+      { name:'北京', value:48 },
+      { name:'上海', value:35 },
+      { name:'深圳', value:87 },
+      { name:'广州', value:175 },
+      { name:'南京', value:65 },
+      { name:'武汉', value:34 },
+      { name:'杭州', value:23 },
+      { name:'天津', value:54 },
+      { name:'苏州', value:54 },
+      { name:'扬州', value:12 }
+    ]
+      
+    var result = data.map((item, index)=>{
+      var name = item.name, val
+      name ? val = geo[name] : console.log('没有这个城市')
+      val.push(item.value)
+      return { name:item.name, value:val }
+    })
+    var yaxis = data.map((item,index) => item.name)
+    
+    
+    var request = new XMLHttpRequest()
+    request.open('get', './china.json')
+    request.onreadystatechange = function () {
+      if (request.readyState === 4) {
+        if (request.status >= 200 && request.status < 300) {
+          var response = request.responseText
+          echarts.registerMap('china', response)
+          var myChart = echarts.init(document.getElementById('bar-map'))
+          var option = {
+            geo: {
+              type:'map',
+              map:'china',
+              top:'20%',
+              width:'50%',
+              right:'48%',
+              itemStyle: {
+                normal: {
+                  areaColor: '#eee'
+                },
+                emphasis: {
+                  areaColor:'#ccc'
+                }
+              }
+            },
+            tooltip:{            
+              formatter:function (params) {
+                var temp = params.value[2] ? params.value[2] : params.value
+                return `${params.name}<Br>销量: ${temp}`
+              }
+            },
+            visualMap:{
+              type:'continuous',
+              min:0,
+              max:200,
+              calculable: true,
+              inRange:{
+                color: ['#50a3ba','#eac736','#d94e5d']
+              },
+              textStyle:{
+                color: '#fff'
+              }
+            },
+            grid:{
+              left:'56%',
+              top:'20%',
+              right:'3%'
+            },
+            yAxis:{
+              type:'category',
+              axisTick:{
+                show:false,
+                alignWithLabel:true
+              },
+              axisLine:{
+                show:false
+              },
+              data:yaxis
+            },
+            xAxis:{
+              type:'value',
+              position:'top',
+              axisLine:{
+                show:false
+              },
+              axisTick:{
+                show:false
+              },
+              splitLine:{
+                show:false
+              }
+            },
+            series: [
+              {
+                name:'销量',
+                type:'scatter',
+                symbolSize: function (value) {
+                  return value[2]/5
+                },
+                itemStyle:{
+                  normal:{
+                    color:'RGB(58, 123, 196)'
+                  }
+                },
+                coordinateSystem:'geo',
+                data:result
+              },
+              {
+                name:'销量',
+                type:'bar',
+                barWidth:20,
+                data:data
+              }
+            ]
+          }
+          myChart.setOption(option,true)
+        }
+      }
+    }
+    request.send()
+
+
+
+  </script>
+</body> 
+</html>
